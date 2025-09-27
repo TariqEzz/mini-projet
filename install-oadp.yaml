@@ -1,0 +1,45 @@
+# 1️⃣ Créer un namespace pour OADP
+oc create namespace oadp
+
+# 2️⃣ Ajouter le catalogue OADP OperatorHub
+oc apply -f - <<EOF
+apiVersion: operators.coreos.com/v1
+kind: CatalogSource
+metadata:
+  name: oadp-operatorhub
+  namespace: openshift-marketplace
+spec:
+  sourceType: grpc
+  image: quay.io/openshift-cloud/oadp-operator-index:latest
+  displayName: OADP Operator
+  publisher: Red Hat
+EOF
+
+# 3️⃣ Installer l’Operator OADP via Operator Lifecycle Manager (OLM)
+oc apply -f - <<EOF
+apiVersion: operators.coreos.com/v1alpha1
+kind: OperatorGroup
+metadata:
+  name: oadp-operatorgroup
+  namespace: oadp
+spec:
+  targetNamespaces:
+  - oadp
+EOF
+
+oc apply -f - <<EOF
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: oadp-subscription
+  namespace: oadp
+spec:
+  channel: stable
+  name: oadp-operator
+  source: oadp-operatorhub
+  sourceNamespace: openshift-marketplace
+  installPlanApproval: Automatic
+EOF
+
+# 4️⃣ Vérifier que l’Operator est bien installé
+oc get csv -n oadp
